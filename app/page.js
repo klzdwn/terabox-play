@@ -52,27 +52,18 @@ export default function Home() {
     }
   };
 
-  // Fungsi buat ngebungkus URL ke Proxy Vercel
-  const getProxiedUrl = (originalUrl) => {
-    if (!originalUrl) return '';
-    return `/api/proxy?url=${encodeURIComponent(originalUrl)}`;
-  };
-
   const getBestVideoUrl = (file) => {
-    let rawUrl = file.normal_dlink;
     if (file.fast_stream_url) {
-      rawUrl = file.fast_stream_url['480p'] || file.fast_stream_url['360p'] || file.fast_stream_url['720p'] || file.fast_stream_url['1080p'] || file.normal_dlink;
+      return file.fast_stream_url['480p'] || file.fast_stream_url['360p'] || file.fast_stream_url['720p'] || file.fast_stream_url['1080p'] || file.normal_dlink;
     }
-    return getProxiedUrl(rawUrl);
+    return file.normal_dlink;
   };
 
   const Thumbnail = ({ file }) => {
     const [error, setError] = useState(false);
     const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
     const isImage = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
-    
-    // Pake proxy buat thumbnail
-    const src = isVideo ? getBestVideoUrl(file) : getProxiedUrl(file.normal_dlink);
+    const src = isVideo ? getBestVideoUrl(file) : file.normal_dlink;
 
     if (error || !isVideo) {
       return (
@@ -204,18 +195,18 @@ export default function Home() {
                      const isVid = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
                      const isImg = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
                      
-                     // KALAU FOTO (Pake Proxy)
+                     // KALAU FOTO
                      if (isImg) {
-                        const imgSrc = getProxiedUrl(file.normal_dlink);
                         return (
                           <div className="relative w-full h-full flex items-center justify-center group">
                             <img 
-                              src={imgSrc} 
+                              src={file.normal_dlink} 
                               alt={file.name} 
                               className="w-full h-full object-contain pointer-events-none" 
                             />
+                            {/* TOMBOL FULLSCREEN DI POJOK KANAN BAWAH */}
                             <button 
-                              onClick={() => setFullscreenImage(imgSrc)}
+                              onClick={() => setFullscreenImage(file.normal_dlink)}
                               className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-md transition-all border border-white/20 z-20"
                               title="Fullscreen"
                             >
@@ -225,7 +216,7 @@ export default function Home() {
                         );
                      }
 
-                     // KALAU VIDEO (Pake Proxy)
+                     // KALAU VIDEO
                      if (isVid) {
                        return (
                          <video 
@@ -253,7 +244,7 @@ export default function Home() {
                          if (isPlayMode) {
                             setActiveFileIndex(index);
                          } else {
-                            window.open(getProxiedUrl(file.normal_dlink), '_blank');
+                            window.open(file.normal_dlink, '_blank');
                          }
                       }}
                       className={`p-3 sm:p-4 border-b border-slate-100 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors ${activeFileIndex === index && isPlayMode ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
