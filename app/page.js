@@ -126,6 +126,8 @@ export default function Home() {
                    <video 
                      key={activeFileIndex} 
                      controls 
+                     controlsList="nodownload"
+                     playsInline
                      className="w-full h-full object-contain"
                    >
                      <source 
@@ -141,7 +143,6 @@ export default function Home() {
                   const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
                   const isImage = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
                   
-                  // Ambil link stream terbaik buat thumbnail dan player
                   const streamUrl = file.fast_stream_url?.['1080p'] || file.fast_stream_url?.['720p'] || file.fast_stream_url?.['480p'] || file.normal_dlink;
                   
                   return (
@@ -160,14 +161,12 @@ export default function Home() {
                       <div className="w-24 h-16 bg-slate-900 rounded-lg overflow-hidden shrink-0 relative flex items-center justify-center shadow-sm">
                          {isVideo ? (
                            <>
-                             {/* Pake video preload metadata buat dapet frame pertama sebagai thumbnail */}
                              <video 
                                src={streamUrl} 
                                preload="metadata" 
-                               className="w-full h-full object-cover opacity-80"
+                               className="w-full h-full object-cover opacity-80 pointer-events-none"
                              />
-                             {/* Icon Play di tengah thumbnail */}
-                             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                             <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                                <svg className="text-white drop-shadow-md" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                              </div>
                            </>
@@ -191,11 +190,7 @@ export default function Home() {
                 })}
               </div>
               
-              <div className="p-4 text-center bg-blue-50/50 border-t border-blue-100">
-                <p className="text-sm text-slate-600 font-medium">
-                  Want to download other files? <span className="text-blue-600 font-bold cursor-pointer">Click the Download button above 👆</span>
-                </p>
-              </div>
+              {/* TEKS BAWAH UDAH GUE HAPUS DI SINI */}
             </div>
           )}
         </div>
