@@ -1,42 +1,64 @@
 'use client';
-import { useState, memo } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-// Pake React.memo biar komponen ini ga di-render ulang kalo props-nya ga berubah
-const Thumbnail = memo(({ file, getBestVideoUrl }) => {
-  const [error, setError] = useState(false);
+// Komponen Thumbnail pake Canvas biar ga kedip
+const SmartThumbnail = ({ file, getBestVideoUrl }) => {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  
   const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
   const isImage = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
   const src = isVideo ? getBestVideoUrl(file) : file.normal_dlink;
 
-  if (error || !isVideo) {
-    return (
-      <div className="w-full h-full relative flex items-center justify-center bg-slate-800">
-        {isImage ? (
-           <img src={src} alt="thumb" className="w-full h-full object-cover" />
-        ) : (
-           <div className="w-full h-full flex items-center justify-center bg-slate-800">
-             <svg className="text-slate-500" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-           </div>
-        )}
-      </div>
-    );
+  // Kalo ini gambar asli, tampilin langsung
+  if (isImage) {
+    return <img src={src} alt="thumb" className="w-full h-full object-cover" />;
   }
 
+  // Kalo video, kita pake video hidden buat dapetin frame, terus gambar ke canvas
   return (
-    <>
-      {/* preload="none" biar ga nge-load ulang datanya, cuma nampilin frame pertama */}
+    <div className="w-full h-full relative flex items-center justify-center bg-slate-900 overflow-hidden">
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-800 animate-pulse z-10">
+          <svg className="text-slate-600" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </div>
+      )}
+      
       <video 
+        ref={videoRef}
         src={src} 
-        preload="none" 
-        onError={() => setError(true)}
-        className="w-full h-full object-cover opacity-80 pointer-events-none"
+        preload="metadata"
+        muted
+        playsInline
+        className={`hidden`} // Video aslinya disembunyiin
+        onLoadedData={(e) => {
+          const video = e.target;
+          const canvas = canvasRef.current;
+          if (canvas && video) {
+            // Gambar frame video ke canvas
+            canvas.width = 160;
+            canvas.height = 90;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            setIsLoaded(true); // Tampilin canvas
+          }
+        }}
       />
-      <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
+      
+      {/* Canvas buat nampilin hasil screenshot video */}
+      <canvas 
+        ref={canvasRef} 
+        className={`w-full h-full object-cover absolute inset-0 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+      />
+      
+      {/* Icon Play overlay */}
+      <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20 pointer-events-none">
         <svg className="text-white drop-shadow-md" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
       </div>
-    </>
+    </div>
   );
-});
+};
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -251,8 +273,7 @@ export default function Home() {
                       className={`p-3 rounded-2xl flex items-center gap-4 cursor-pointer transition-all border ${activeFileIndex === index ? 'bg-blue-500/10 border-blue-500/30' : 'bg-slate-900/50 border-transparent hover:bg-slate-800'}`}
                     >
                       <div className="w-20 h-14 bg-slate-950 rounded-lg overflow-hidden shrink-0 relative flex items-center justify-center border border-white/5">
-                         {/* Panggil komponen memo */}
-                         <Thumbnail file={file} getBestVideoUrl={getBestVideoUrl} />
+                         <SmartThumbnail file={file} getBestVideoUrl={getBestVideoUrl} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className={`text-sm font-bold truncate mb-1 ${activeFileIndex === index ? 'text-blue-400' : 'text-slate-200'}`}>{file.name}</h3>
@@ -275,7 +296,7 @@ export default function Home() {
                       <div key={index} className="bg-slate-900/80 border border-white/5 rounded-2xl p-4 flex flex-col gap-4">
                         <div className="flex items-center gap-4">
                            <div className="w-16 h-16 bg-slate-950 rounded-xl overflow-hidden shrink-0 relative border border-white/10">
-                             <Thumbnail file={file} getBestVideoUrl={getBestVideoUrl} />
+                             <SmartThumbnail file={file} getBestVideoUrl={getBestVideoUrl} />
                              <div className="absolute top-0 right-0 bg-black/80 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-bl-md">
                                {isVideo ? ext : 'IMG'}
                              </div>
