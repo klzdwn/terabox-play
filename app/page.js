@@ -98,7 +98,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
       
-      {/* FULLSCREEN IMAGE OVERLAY (Mode Layar Penuh) */}
+      {/* FULLSCREEN IMAGE OVERLAY */}
       {fullscreenImage && (
         <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center p-2">
           
@@ -108,14 +108,13 @@ export default function Home() {
             className="max-w-full max-h-full object-contain"
           />
 
-          {/* TOMBOL KOTAK (MINIMIZE) DI KANAN BAWAH PAS FULLSCREEN */}
+          {/* TOMBOL KOTAK PERSIS SCREENSHOT LU (KANAN BAWAH) */}
           <button 
             onClick={() => setFullscreenImage(null)}
-            className="absolute bottom-6 right-6 bg-black/60 hover:bg-black/80 text-white p-3 rounded-xl border border-white/20 shadow-lg z-[10000] transition-transform active:scale-90"
-            title="Minimize"
+            className="absolute bottom-6 right-6 bg-black/40 hover:bg-black/60 text-white p-4 rounded-2xl border border-white/10 shadow-lg z-[10000] transition-transform active:scale-95 flex items-center justify-center"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-               <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
             </svg>
           </button>
         </div>
@@ -209,13 +208,15 @@ export default function Home() {
                               alt={file.name} 
                               className="w-full h-full object-contain pointer-events-none" 
                             />
-                            {/* TOMBOL KOTAK (FULLSCREEN) DI POJOK KANAN BAWAH */}
+                            {/* TOMBOL FULLSCREEN DI POJOK KANAN BAWAH (PERSIS SS LU) */}
                             <button 
                               onClick={() => setFullscreenImage(file.normal_dlink)}
-                              className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-md transition-all border border-white/20 z-20"
+                              className="absolute bottom-3 right-3 bg-black/40 hover:bg-black/60 text-white p-2.5 rounded-xl border border-white/10 z-20 transition-all"
                               title="Fullscreen"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                              </svg>
                             </button>
                           </div>
                         );
