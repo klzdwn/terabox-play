@@ -98,30 +98,26 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
       
-      {/* FULLSCREEN IMAGE OVERLAY */}
+      {/* FULLSCREEN IMAGE OVERLAY (Mode Layar Penuh) */}
       {fullscreenImage && (
-        <div 
-          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center p-4"
-          onClick={() => setFullscreenImage(null)} 
-        >
-          {/* TOMBOL CLOSE (X) */}
-          <button 
-            onClick={(e) => {
-              e.stopPropagation(); 
-              setFullscreenImage(null);
-            }}
-            className="absolute top-6 right-6 text-white bg-red-600 hover:bg-red-700 p-4 rounded-full shadow-lg z-[10000] flex items-center justify-center transition-transform active:scale-90"
-            title="Tutup Fullscreen"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
+        <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center p-2">
           
           <img 
             src={fullscreenImage} 
             alt="Fullscreen" 
             className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()} 
           />
+
+          {/* TOMBOL KOTAK (MINIMIZE) DI KANAN BAWAH PAS FULLSCREEN */}
+          <button 
+            onClick={() => setFullscreenImage(null)}
+            className="absolute bottom-6 right-6 bg-black/60 hover:bg-black/80 text-white p-3 rounded-xl border border-white/20 shadow-lg z-[10000] transition-transform active:scale-90"
+            title="Minimize"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+               <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+            </svg>
+          </button>
         </div>
       )}
 
@@ -211,10 +207,9 @@ export default function Home() {
                             <img 
                               src={file.normal_dlink} 
                               alt={file.name} 
-                              onClick={() => setFullscreenImage(file.normal_dlink)} // FOTO DIKLIK LANGSUNG FULLSCREEN OVERLAY
-                              className="w-full h-full object-contain cursor-zoom-in" 
+                              className="w-full h-full object-contain pointer-events-none" 
                             />
-                            {/* TOMBOL FULLSCREEN DI POJOK KANAN BAWAH */}
+                            {/* TOMBOL KOTAK (FULLSCREEN) DI POJOK KANAN BAWAH */}
                             <button 
                               onClick={() => setFullscreenImage(file.normal_dlink)}
                               className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-md transition-all border border-white/20 z-20"
