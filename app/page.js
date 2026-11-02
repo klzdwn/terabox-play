@@ -6,14 +6,14 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [activeFileIndex, setActiveFileIndex] = useState(null); // Nyimpen index file yg lagi diputer
 
   const handleFetch = async () => {
     if (!url) return;
     setLoading(true);
     setError(null);
     setData(null);
-    setSelectedFile(null);
+    setActiveFileIndex(null);
 
     try {
       const response = await fetch('/api/terabox', {
@@ -28,13 +28,6 @@ export default function Home() {
       }
       
       setData(resJson);
-      
-      // Otomatis pilih file video pertama buat diputer
-      if (resJson.list && resJson.list.length > 0) {
-        const firstVideo = resJson.list.find(f => f.type === 'video') || resJson.list[0];
-        setSelectedFile(firstVideo);
-      }
-
     } catch (err) {
       setError(err.message);
     } finally {
@@ -53,8 +46,7 @@ export default function Home() {
           <h1 className="text-xl font-bold">TeraPlay <span className="text-blue-600">Clone</span></h1>
         </div>
         <button className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          <span className="hidden sm:inline">LOGIN / SIGNUP</span>
+          LOGIN / SIGNUP
         </button>
       </header>
 
@@ -83,7 +75,6 @@ export default function Home() {
               }}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               PASTE
             </button>
           </div>
@@ -93,12 +84,7 @@ export default function Home() {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-lg disabled:opacity-50"
           >
-            {loading ? 'Processing...' : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                Play
-              </>
-            )}
+            {loading ? 'Processing...' : 'Play'}
           </button>
         </div>
 
@@ -110,83 +96,93 @@ export default function Home() {
           </div>
         )}
 
-        {/* Video Player Area (Kalau udah dipilih) */}
-        {selectedFile && (
-          <div className="mb-8">
-            <div className="bg-black rounded-2xl overflow-hidden shadow-xl aspect-video relative">
-              <video 
-                key={selectedFile.file_path} // Biar video reload kalau ganti pilihan
-                controls 
-                autoPlay
-                className="w-full h-full object-contain"
-              >
-                <source 
-                  src={selectedFile.fast_stream_url?.['1080p'] || selectedFile.fast_stream_url?.['720p'] || selectedFile.fast_stream_url?.['480p'] || selectedFile.normal_dlink} 
-                  type="video/mp4" 
-                />
-              </video>
-            </div>
-            <div className="mt-4 flex justify-between items-start">
-              <div>
-                <h2 className="text-lg font-bold break-all">{selectedFile.name}</h2>
-                <p className="text-sm text-slate-500">{selectedFile.size_formatted} • {selectedFile.duration} • {selectedFile.quality}</p>
-              </div>
-              <a 
-                href={selectedFile.normal_dlink} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-xl font-semibold flex items-center gap-2 whitespace-nowrap ml-4"
-              >
-                Download
-              </a>
-            </div>
-          </div>
-        )}
-
         {/* List File */}
         {data && data.list && (
           <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
-            {/* Tabs */}
-            <div className="p-4 border-b border-slate-100 flex gap-2">
-              <button className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
-                <span className="bg-blue-600 text-white px-2 py-0.5 rounded-md text-xs">{data.list.length}</span>
-                Files
-              </button>
+            <div className="p-4 border-b border-slate-100 flex gap-2 bg-slate-50">
+              <span className="text-sm font-bold text-slate-600">Total {data.list.length} File ditemukan</span>
             </div>
 
-            {/* List Items */}
-            <div className="max-h-[400px] overflow-y-auto">
-              {data.list.map((file, index) => (
-                <div 
-                  key={index}
-                  onClick={() => {
-                     if (file.type === 'video') setSelectedFile(file);
-                  }}
-                  className={`p-4 border-b border-slate-50 flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors ${selectedFile?.file_path === file.file_path ? 'bg-blue-50/50' : ''}`}
-                >
-                  {/* Thumbnail Placeholder */}
-                  <div className="w-20 h-14 bg-slate-800 rounded-lg overflow-hidden shrink-0 relative flex items-center justify-center">
-                     {/* Gambar thumbnail aslinya ga ada di API, jadi pake icon video */}
-                     <svg className="text-white/50" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  </div>
-                  
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-slate-800 truncate mb-1">{file.name}</h3>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                      <span>{file.size_formatted}</span>
-                      <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                      <span>{file.duration}</span>
-                      <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                      <span className="text-green-600">{file.quality}</span>
+            <div className="flex flex-col">
+              {data.list.map((file, index) => {
+                const isImage = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
+                
+                // Link stream prioritas (buat video) atau link gambar
+                const streamUrl = file.fast_stream_url?.['1080p'] || file.fast_stream_url?.['720p'] || file.fast_stream_url?.['480p'] || file.normal_dlink;
+
+                return (
+                  <div key={index} className="border-b border-slate-100 last:border-0">
+                    
+                    {/* Bagian Header List (Bisa di klik) */}
+                    <div 
+                      onClick={() => setActiveFileIndex(activeFileIndex === index ? null : index)}
+                      className={`p-4 flex items-center gap-4 cursor-pointer transition-colors ${activeFileIndex === index ? 'bg-blue-50/60' : 'hover:bg-slate-50'}`}
+                    >
+                      <div className="w-20 h-14 bg-slate-800 rounded-lg overflow-hidden shrink-0 relative flex items-center justify-center">
+                         {isVideo ? (
+                           <svg className="text-white/50" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                         ) : isImage ? (
+                           <svg className="text-white/50" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                         ) : (
+                           <svg className="text-white/50" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                         )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-slate-800 truncate mb-1">{file.name}</h3>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 font-medium">
+                          <span>{file.size_formatted}</span>
+                          {file.duration && <><span className="w-1 h-1 bg-slate-300 rounded-full"></span><span>{file.duration}</span></>}
+                          {file.quality && <><span className="w-1 h-1 bg-slate-300 rounded-full"></span><span className="text-green-600">{file.quality}</span></>}
+                        </div>
+                      </div>
+                      
+                      {/* Tombol panah buat buka tutup player */}
+                      <div className={`text-slate-400 transition-transform ${activeFileIndex === index ? 'rotate-180' : ''}`}>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      </div>
                     </div>
+
+                    {/* Player / Preview Inline (Muncul kalau di klik) */}
+                    {activeFileIndex === index && (
+                      <div className="bg-slate-900 border-t border-slate-200">
+                        {isVideo ? (
+                          <div className="aspect-video bg-black flex items-center justify-center relative">
+                            {/* Hapus autoPlay biar ga jalan otomatis */}
+                            <video controls controlsList="nodownload" className="w-full h-full object-contain">
+                              <source src={streamUrl} type="video/mp4" />
+                              Browser lu ga support video.
+                            </video>
+                          </div>
+                        ) : isImage ? (
+                          <div className="p-4 flex justify-center bg-slate-900">
+                            <img src={streamUrl} alt={file.name} className="max-h-[400px] object-contain rounded-lg" />
+                          </div>
+                        ) : (
+                          <div className="p-6 text-center text-slate-400 text-sm">
+                            Tipe file tidak didukung untuk ditampilkan.
+                          </div>
+                        )}
+                        
+                        {/* Action Bar di dalam player */}
+                        <div className="p-3 bg-slate-800 flex justify-end gap-2">
+                           <a 
+                              href={file.normal_dlink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                              Download
+                            </a>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="p-4 text-center bg-slate-50 text-sm text-slate-500">
-              Pilih video di atas untuk memutar. Klik Download untuk menyimpan.
+                );
+              })}
             </div>
           </div>
         )}
