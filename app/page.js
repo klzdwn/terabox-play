@@ -34,8 +34,9 @@ export default function Home() {
       setShowList(true);
       
       if (mode === 'play' && resJson.list.length > 0) {
-         const firstVideo = resJson.list.find(f => f.type === 'video') || resJson.list[0];
-         setActiveFileIndex(resJson.list.indexOf(firstVideo));
+         // Cari file pertama yang beneran video
+         const firstVideoIndex = resJson.list.findIndex(f => f.type === 'video' || f.name.match(/\.(mp4|mkv|mov|webm)$/i));
+         if (firstVideoIndex !== -1) setActiveFileIndex(firstVideoIndex);
       }
 
     } catch (err) {
@@ -46,9 +47,17 @@ export default function Home() {
     }
   };
 
+  // Fungsi buat nentuin link mana yang paling bagus buat diputer
+  const getBestVideoUrl = (file) => {
+    // Kadang fast_stream_url error, fallback ke normal_dlink lebih aman
+    if (file.fast_stream_url) {
+      return file.fast_stream_url['480p'] || file.fast_stream_url['360p'] || file.fast_stream_url['720p'] || file.fast_stream_url['1080p'] || file.normal_dlink;
+    }
+    return file.normal_dlink;
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
-      {/* Navbar */}
       <nav className="bg-white border-b border-slate-100 py-4 px-4 sm:px-6 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <div className="bg-blue-600 text-white p-1.5 rounded-lg">
@@ -63,7 +72,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Header / Input Area */}
       <header className="pt-10 pb-6 px-4 text-center">
         <div className="max-w-3xl mx-auto bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 relative z-10">
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -112,7 +120,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* List File */}
           {data && showList && (
             <div className="mt-6 border border-blue-200 rounded-2xl overflow-hidden bg-white shadow-sm">
               <div className="p-3 flex gap-2 border-b border-blue-100 bg-blue-50/30">
@@ -121,20 +128,33 @@ export default function Home() {
                 </button>
               </div>
 
+              {/* Player Utama */}
               {isPlayMode && activeFileIndex !== null && (
-                <div className="bg-black w-full aspect-video relative border-b border-slate-800">
-                   <video 
-                     key={activeFileIndex} 
-                     controls 
-                     controlsList="nodownload"
-                     playsInline
-                     className="w-full h-full object-contain"
-                   >
-                     <source 
-                       src={data.list[activeFileIndex].fast_stream_url?.['1080p'] || data.list[activeFileIndex].fast_stream_url?.['720p'] || data.list[activeFileIndex].fast_stream_url?.['480p'] || data.list[activeFileIndex].normal_dlink} 
-                       type="video/mp4" 
-                     />
-                   </video>
+                <div className="bg-black w-full aspect-video relative border-b border-slate-800 flex items-center justify-center">
+                   {(() => {
+                     const file = data.list[activeFileIndex];
+                     const isVid = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
+                     
+                     if (!isVid) return <p className="text-white text-sm">Ini bukan video, tidak bisa diputar di player.</p>;
+
+                     return (
+                       <video 
+                         key={activeFileIndex} 
+                         controls 
+                         controlsList="nodownload"
+                         playsInline
+                         className="w-full h-full object-contain"
+                         // Tambahin poster biar ga kosong banget kalau video loading
+                         poster={file.normal_dlink} 
+                       >
+                         <source 
+                           src={getBestVideoUrl(file)} 
+                           type="video/mp4" 
+                         />
+                         Browser lu ga support video ini.
+                       </video>
+                     );
+                   })()}
                 </div>
               )}
 
@@ -143,7 +163,7 @@ export default function Home() {
                   const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
                   const isImage = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
                   
-                  const streamUrl = file.fast_stream_url?.['1080p'] || file.fast_stream_url?.['720p'] || file.fast_stream_url?.['480p'] || file.normal_dlink;
+                  const thumbnailUrl = isVideo ? getBestVideoUrl(file) : file.normal_dlink;
                   
                   return (
                     <div 
@@ -157,12 +177,12 @@ export default function Home() {
                       }}
                       className={`p-3 sm:p-4 border-b border-slate-100 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors ${activeFileIndex === index && isPlayMode ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
                     >
-                      {/* THUMBNAIL BANNER */}
+                      {/* Thumbnail */}
                       <div className="w-24 h-16 bg-slate-900 rounded-lg overflow-hidden shrink-0 relative flex items-center justify-center shadow-sm">
                          {isVideo ? (
                            <>
                              <video 
-                               src={streamUrl} 
+                               src={thumbnailUrl} 
                                preload="metadata" 
                                className="w-full h-full object-cover opacity-80 pointer-events-none"
                              />
@@ -189,8 +209,6 @@ export default function Home() {
                   );
                 })}
               </div>
-              
-              {/* TEKS BAWAH UDAH GUE HAPUS DI SINI */}
             </div>
           )}
         </div>
