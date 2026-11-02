@@ -36,7 +36,6 @@ export default function Home() {
       setData(resJson);
       setShowList(true);
       
-      // Kalau mode Play, otomatis set video pertama
       if (mode === 'play' && resJson.list.length > 0) {
          const firstVideoIndex = resJson.list.findIndex(f => 
            f.type === 'video' || 
@@ -120,7 +119,8 @@ export default function Home() {
           <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-blue-500/20">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </div>
-          <span className="text-xl font-black tracking-tight text-white">Tera<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Box</span></span>
+          {/* UDAH GANTI JADI TERAPLAY */}
+          <span className="text-xl font-black tracking-tight text-white">Tera<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Play</span></span>
         </div>
         <div className="flex items-center gap-4">
           <button className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">Login</button>
@@ -136,10 +136,8 @@ export default function Home() {
           </h1>
         </div>
 
-        {/* INPUT CARD */}
         <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-black/50 mb-8">
           
-          {/* INPUT & TOMBOL PASTE (ATAS) */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">
               <input
@@ -152,7 +150,6 @@ export default function Home() {
               <svg className="absolute left-4 top-4 text-slate-500" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
             </div>
             
-            {/* TOMBOL PASTE DIKECILIN */}
             <button 
               onClick={async () => {
                 try {
@@ -166,8 +163,8 @@ export default function Home() {
             </button>
           </div>
           
-          {/* TOMBOL STREAM (KIRI) & DOWNLOAD (KANAN) */}
           <div className="flex flex-row gap-3 mt-6">
+            {/* TOMBOL STREAM JADI PLAY */}
             <button
               onClick={() => handleFetch('play')}
               disabled={loading || !url.trim()}
@@ -176,7 +173,7 @@ export default function Home() {
               {loading && isPlayMode ? 'Loading...' : (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  Stream
+                  Play
                 </>
               )}
             </button>
@@ -208,7 +205,6 @@ export default function Home() {
                 <div className="h-px bg-white/10 flex-1"></div>
               </div>
 
-              {/* KALAU MODE PLAY (STREAM) */}
               {isPlayMode && activeFileIndex !== null && (
                 <div className="bg-black rounded-2xl overflow-hidden mb-6 border border-white/10 shadow-xl relative aspect-video">
                    {(() => {
@@ -238,9 +234,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* LIST FILE (BEDA TAMPILAN KALAU MODE DOWNLOAD) */}
               {isPlayMode ? (
-                // Tampilan List biasa buat Stream
                 <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                   {data.list.map((file, index) => (
                     <div 
@@ -262,16 +256,13 @@ export default function Home() {
                   ))}
                 </div>
               ) : (
-                // Tampilan Card Download (Persis kayak SS lu)
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                   {data.list.map((file, index) => {
                     const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
-                    // Ambil format asli (MOV/MP4) dari nama file
                     const ext = file.name.split('.').pop().toUpperCase();
                     
                     return (
                       <div key={index} className="bg-slate-900/80 border border-white/5 rounded-2xl p-4 flex flex-col gap-4">
-                        {/* Info Atas */}
                         <div className="flex items-center gap-4">
                            <div className="w-16 h-16 bg-slate-950 rounded-xl overflow-hidden shrink-0 relative border border-white/10">
                              <Thumbnail file={file} />
@@ -289,7 +280,6 @@ export default function Home() {
                            </div>
                         </div>
 
-                        {/* Tombol Download Server 1 & 2 */}
                         {isVideo && (
                           <div className="flex gap-3 mt-2">
                             <a 
@@ -300,17 +290,17 @@ export default function Home() {
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                               Server 1 (HD)
                             </a>
+                            {/* WARNA UNGU UDAH GUE GANTI JADI BIRU (bg-blue-600) */}
                             <a 
                               href={file.normal_dlink} 
                               target="_blank" rel="noopener noreferrer"
-                              className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                              className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                               Server 2 (MP4)
                             </a>
                           </div>
                         )}
-                        {/* Kalau bukan video (Foto), tombol download cuma 1 */}
                         {!isVideo && (
                           <a 
                             href={file.normal_dlink} 
