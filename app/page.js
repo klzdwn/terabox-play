@@ -34,9 +34,11 @@ export default function Home() {
       setShowList(true);
       
       if (mode === 'play' && resJson.list.length > 0) {
-         // Cari file pertama yang beneran video
-         const firstVideoIndex = resJson.list.findIndex(f => f.type === 'video' || f.name.match(/\.(mp4|mkv|mov|webm)$/i));
-         if (firstVideoIndex !== -1) setActiveFileIndex(firstVideoIndex);
+         const firstVideoIndex = resJson.list.findIndex(f => 
+           f.type === 'video' || 
+           f.name.match(/\.(mp4|mkv|mov|webm)$/i)
+         );
+         setActiveFileIndex(firstVideoIndex !== -1 ? firstVideoIndex : 0);
       }
 
     } catch (err) {
@@ -47,14 +49,53 @@ export default function Home() {
     }
   };
 
-  // Fungsi buat nentuin link mana yang paling bagus buat diputer
   const getBestVideoUrl = (file) => {
-    // Kadang fast_stream_url error, fallback ke normal_dlink lebih aman
     if (file.fast_stream_url) {
       return file.fast_stream_url['480p'] || file.fast_stream_url['360p'] || file.fast_stream_url['720p'] || file.fast_stream_url['1080p'] || file.normal_dlink;
     }
     return file.normal_dlink;
   };
+
+  // Komponen Thumbnail biar ga item doang kalo gagal render
+  const Thumbnail = ({ file }) => {
+    const [error, setError] = useState(false);
+    const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
+    const isImage = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
+    const src = isVideo ? getBestVideoUrl(file) : file.normal_dlink;
+
+    if (error || !isVideo) {
+      // Fallback kalo video gagal render atau file berupa gambar
+      return (
+        <div className="w-full h-full relative flex items-center justify-center bg-slate-800">
+          {isImage ? (
+             <img src={src} className="w-full h-full object-cover" />
+          ) : (
+             <>
+               {/* Background pattern buat video yang gagal load */}
+               <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+               <svg className="text-white/80 drop-shadow-md relative z-10" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+             </>
+          )}
+        </div>
+      );
+    }
+
+    // Kalo video berhasil load
+    return (
+      <>
+        <video 
+          src={src} 
+          preload="metadata" 
+          onError={() => setError(true)} // Tangkap error kalo link mati
+          className="w-full h-full object-cover opacity-80 pointer-events-none"
+        />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
+          <svg className="text-white drop-shadow-md" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </div>
+      </>
+    );
+  };
+
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
@@ -128,32 +169,39 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Player Utama */}
+              {/* MAIN PLAYER AREA */}
               {isPlayMode && activeFileIndex !== null && (
                 <div className="bg-black w-full aspect-video relative border-b border-slate-800 flex items-center justify-center">
                    {(() => {
                      const file = data.list[activeFileIndex];
                      const isVid = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
+                     const isImg = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
                      
-                     if (!isVid) return <p className="text-white text-sm">Ini bukan video, tidak bisa diputar di player.</p>;
+                     // Kalo foto, tampilin gambar
+                     if (isImg) {
+                        return <img src={file.normal_dlink} alt={file.name} className="w-full h-full object-contain" />;
+                     }
 
-                     return (
-                       <video 
-                         key={activeFileIndex} 
-                         controls 
-                         controlsList="nodownload"
-                         playsInline
-                         className="w-full h-full object-contain"
-                         // Tambahin poster biar ga kosong banget kalau video loading
-                         poster={file.normal_dlink} 
-                       >
-                         <source 
-                           src={getBestVideoUrl(file)} 
-                           type="video/mp4" 
-                         />
-                         Browser lu ga support video ini.
-                       </video>
-                     );
+                     // Kalo video, tampilin player
+                     if (isVid) {
+                       return (
+                         <video 
+                           key={activeFileIndex} 
+                           controls 
+                           controlsList="nodownload"
+                           playsInline
+                           className="w-full h-full object-contain"
+                         >
+                           <source 
+                             src={getBestVideoUrl(file)} 
+                             type="video/mp4" 
+                           />
+                         </video>
+                       );
+                     }
+
+                     // Kalo tipe file lain, kosongin aja
+                     return null;
                    })()}
                 </div>
               )}
@@ -162,8 +210,6 @@ export default function Home() {
                 {data.list.map((file, index) => {
                   const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
                   const isImage = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
-                  
-                  const thumbnailUrl = isVideo ? getBestVideoUrl(file) : file.normal_dlink;
                   
                   return (
                     <div 
@@ -177,24 +223,9 @@ export default function Home() {
                       }}
                       className={`p-3 sm:p-4 border-b border-slate-100 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors ${activeFileIndex === index && isPlayMode ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
                     >
-                      {/* Thumbnail */}
+                      {/* THUMBNAIL LIST */}
                       <div className="w-24 h-16 bg-slate-900 rounded-lg overflow-hidden shrink-0 relative flex items-center justify-center shadow-sm">
-                         {isVideo ? (
-                           <>
-                             <video 
-                               src={thumbnailUrl} 
-                               preload="metadata" 
-                               className="w-full h-full object-cover opacity-80 pointer-events-none"
-                             />
-                             <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
-                               <svg className="text-white drop-shadow-md" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                             </div>
-                           </>
-                         ) : isImage ? (
-                           <img src={file.normal_dlink} alt="thumb" className="w-full h-full object-cover" loading="lazy" />
-                         ) : (
-                           <svg className="text-slate-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                         )}
+                         <Thumbnail file={file} />
                       </div>
                       
                       <div className="flex-1 min-w-0">
