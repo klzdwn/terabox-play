@@ -100,18 +100,27 @@ export default function Home() {
       
       {/* FULLSCREEN IMAGE OVERLAY */}
       {fullscreenImage && (
-        <div className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center p-4"
+          onClick={() => setFullscreenImage(null)} 
+        >
+          {/* TOMBOL CLOSE (X) */}
           <button 
-            onClick={() => setFullscreenImage(null)}
-            className="absolute top-6 right-6 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all z-50"
+            onClick={(e) => {
+              e.stopPropagation(); 
+              setFullscreenImage(null);
+            }}
+            className="absolute top-6 right-6 text-white bg-red-600 hover:bg-red-700 p-4 rounded-full shadow-lg z-[10000] flex items-center justify-center transition-transform active:scale-90"
+            title="Tutup Fullscreen"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
           
           <img 
             src={fullscreenImage} 
             alt="Fullscreen" 
             className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()} 
           />
         </div>
       )}
@@ -202,7 +211,8 @@ export default function Home() {
                             <img 
                               src={file.normal_dlink} 
                               alt={file.name} 
-                              className="w-full h-full object-contain pointer-events-none" 
+                              onClick={() => setFullscreenImage(file.normal_dlink)} // FOTO DIKLIK LANGSUNG FULLSCREEN OVERLAY
+                              className="w-full h-full object-contain cursor-zoom-in" 
                             />
                             {/* TOMBOL FULLSCREEN DI POJOK KANAN BAWAH */}
                             <button 
