@@ -9,6 +9,8 @@ export default function Home() {
   const [activeFileIndex, setActiveFileIndex] = useState(null);
   const [showList, setShowList] = useState(false);
   const [isPlayMode, setIsPlayMode] = useState(true);
+  
+  const [fullscreenImage, setFullscreenImage] = useState(null);
 
   const handleFetch = async (mode) => {
     if (!url) return;
@@ -17,6 +19,7 @@ export default function Home() {
     setData(null);
     setActiveFileIndex(null);
     setIsPlayMode(mode === 'play');
+    setFullscreenImage(null);
 
     try {
       const response = await fetch('/api/terabox', {
@@ -49,29 +52,35 @@ export default function Home() {
     }
   };
 
-  const getBestVideoUrl = (file) => {
-    if (file.fast_stream_url) {
-      return file.fast_stream_url['480p'] || file.fast_stream_url['360p'] || file.fast_stream_url['720p'] || file.fast_stream_url['1080p'] || file.normal_dlink;
-    }
-    return file.normal_dlink;
+  // Fungsi buat ngebungkus URL ke Proxy Vercel
+  const getProxiedUrl = (originalUrl) => {
+    if (!originalUrl) return '';
+    return `/api/proxy?url=${encodeURIComponent(originalUrl)}`;
   };
 
-  // Komponen Thumbnail biar ga item doang kalo gagal render
+  const getBestVideoUrl = (file) => {
+    let rawUrl = file.normal_dlink;
+    if (file.fast_stream_url) {
+      rawUrl = file.fast_stream_url['480p'] || file.fast_stream_url['360p'] || file.fast_stream_url['720p'] || file.fast_stream_url['1080p'] || file.normal_dlink;
+    }
+    return getProxiedUrl(rawUrl);
+  };
+
   const Thumbnail = ({ file }) => {
     const [error, setError] = useState(false);
     const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
     const isImage = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
-    const src = isVideo ? getBestVideoUrl(file) : file.normal_dlink;
+    
+    // Pake proxy buat thumbnail
+    const src = isVideo ? getBestVideoUrl(file) : getProxiedUrl(file.normal_dlink);
 
     if (error || !isVideo) {
-      // Fallback kalo video gagal render atau file berupa gambar
       return (
         <div className="w-full h-full relative flex items-center justify-center bg-slate-800">
           {isImage ? (
-             <img src={src} className="w-full h-full object-cover" />
+             <img src={src} alt="thumb" className="w-full h-full object-cover" />
           ) : (
              <>
-               {/* Background pattern buat video yang gagal load */}
                <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                <svg className="text-white/80 drop-shadow-md relative z-10" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
              </>
@@ -80,13 +89,12 @@ export default function Home() {
       );
     }
 
-    // Kalo video berhasil load
     return (
       <>
         <video 
           src={src} 
           preload="metadata" 
-          onError={() => setError(true)} // Tangkap error kalo link mati
+          onError={() => setError(true)}
           className="w-full h-full object-cover opacity-80 pointer-events-none"
         />
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
@@ -96,9 +104,27 @@ export default function Home() {
     );
   };
 
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
+      
+      {/* FULLSCREEN IMAGE OVERLAY */}
+      {fullscreenImage && (
+        <div className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center p-4">
+          <button 
+            onClick={() => setFullscreenImage(null)}
+            className="absolute top-6 right-6 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all z-50"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          
+          <img 
+            src={fullscreenImage} 
+            alt="Fullscreen" 
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+      )}
+
       <nav className="bg-white border-b border-slate-100 py-4 px-4 sm:px-6 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <div className="bg-blue-600 text-white p-1.5 rounded-lg">
@@ -115,6 +141,7 @@ export default function Home() {
 
       <header className="pt-10 pb-6 px-4 text-center">
         <div className="max-w-3xl mx-auto bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 relative z-10">
+          
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">
               <input
@@ -171,18 +198,34 @@ export default function Home() {
 
               {/* MAIN PLAYER AREA */}
               {isPlayMode && activeFileIndex !== null && (
-                <div className="bg-black w-full aspect-video relative border-b border-slate-800 flex items-center justify-center">
+                <div className="bg-black w-full aspect-video relative border-b border-slate-800 flex items-center justify-center overflow-hidden">
                    {(() => {
                      const file = data.list[activeFileIndex];
                      const isVid = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
                      const isImg = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
                      
-                     // Kalo foto, tampilin gambar
+                     // KALAU FOTO (Pake Proxy)
                      if (isImg) {
-                        return <img src={file.normal_dlink} alt={file.name} className="w-full h-full object-contain" />;
+                        const imgSrc = getProxiedUrl(file.normal_dlink);
+                        return (
+                          <div className="relative w-full h-full flex items-center justify-center group">
+                            <img 
+                              src={imgSrc} 
+                              alt={file.name} 
+                              className="w-full h-full object-contain pointer-events-none" 
+                            />
+                            <button 
+                              onClick={() => setFullscreenImage(imgSrc)}
+                              className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-md transition-all border border-white/20 z-20"
+                              title="Fullscreen"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                            </button>
+                          </div>
+                        );
                      }
 
-                     // Kalo video, tampilin player
+                     // KALAU VIDEO (Pake Proxy)
                      if (isVid) {
                        return (
                          <video 
@@ -192,15 +235,10 @@ export default function Home() {
                            playsInline
                            className="w-full h-full object-contain"
                          >
-                           <source 
-                             src={getBestVideoUrl(file)} 
-                             type="video/mp4" 
-                           />
+                           <source src={getBestVideoUrl(file)} type="video/mp4" />
                          </video>
                        );
                      }
-
-                     // Kalo tipe file lain, kosongin aja
                      return null;
                    })()}
                 </div>
@@ -208,9 +246,6 @@ export default function Home() {
 
               <div className="max-h-[400px] overflow-y-auto">
                 {data.list.map((file, index) => {
-                  const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
-                  const isImage = file.type === 'image' || file.name.match(/\.(jpg|jpeg|png|webp)$/i);
-                  
                   return (
                     <div 
                       key={index}
@@ -218,12 +253,11 @@ export default function Home() {
                          if (isPlayMode) {
                             setActiveFileIndex(index);
                          } else {
-                            window.open(file.normal_dlink, '_blank');
+                            window.open(getProxiedUrl(file.normal_dlink), '_blank');
                          }
                       }}
                       className={`p-3 sm:p-4 border-b border-slate-100 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors ${activeFileIndex === index && isPlayMode ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
                     >
-                      {/* THUMBNAIL LIST */}
                       <div className="w-24 h-16 bg-slate-900 rounded-lg overflow-hidden shrink-0 relative flex items-center justify-center shadow-sm">
                          <Thumbnail file={file} />
                       </div>
