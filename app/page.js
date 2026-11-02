@@ -52,11 +52,9 @@ export default function Home() {
     }
   };
 
-  // FUNGSI BUAT DOWNLOAD LANGSUNG TANPA BUKA TAB BARU
   const handleDirectDownload = (fileUrl) => {
     const link = document.createElement('a');
     link.href = fileUrl;
-    // Atribut download buat maksa browser download, bukan buka
     link.setAttribute('download', '');
     document.body.appendChild(link);
     link.click();
@@ -70,6 +68,7 @@ export default function Home() {
     return file.normal_dlink;
   };
 
+  // Gue pindahin Thumbnail ke luar biar ga re-render terus
   const Thumbnail = ({ file }) => {
     const [error, setError] = useState(false);
     const isVideo = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
@@ -214,8 +213,9 @@ export default function Home() {
                 <div className="h-px bg-white/10 flex-1"></div>
               </div>
 
+              {/* MAIN PLAYER AREA (Gue kasih key biar ga flicker) */}
               {isPlayMode && activeFileIndex !== null && (
-                <div className="bg-black rounded-2xl overflow-hidden mb-6 border border-white/10 shadow-xl relative aspect-video">
+                <div key={`player-${activeFileIndex}`} className="bg-black rounded-2xl overflow-hidden mb-6 border border-white/10 shadow-xl relative aspect-video">
                    {(() => {
                      const file = data.list[activeFileIndex];
                      const isVid = file.type === 'video' || file.name.match(/\.(mp4|mkv|mov|webm)$/i);
@@ -233,7 +233,7 @@ export default function Home() {
                      }
                      if (isVid) {
                        return (
-                         <video key={activeFileIndex} controls controlsList="nodownload" playsInline className="w-full h-full object-contain">
+                         <video key={`vid-${activeFileIndex}`} controls controlsList="nodownload" playsInline className="w-full h-full object-contain">
                            <source src={getBestVideoUrl(file)} type="video/mp4" />
                          </video>
                        );
@@ -251,7 +251,8 @@ export default function Home() {
                       className={`p-3 rounded-2xl flex items-center gap-4 cursor-pointer transition-all border ${activeFileIndex === index ? 'bg-blue-500/10 border-blue-500/30' : 'bg-slate-900/50 border-transparent hover:bg-slate-800'}`}
                     >
                       <div className="w-20 h-14 bg-slate-950 rounded-lg overflow-hidden shrink-0 relative flex items-center justify-center border border-white/5">
-                         <Thumbnail file={file} />
+                         {/* KEY UNIK BIAR GA RE-RENDER TERUS */}
+                         <Thumbnail key={file.file_path} file={file} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className={`text-sm font-bold truncate mb-1 ${activeFileIndex === index ? 'text-blue-400' : 'text-slate-200'}`}>{file.name}</h3>
@@ -274,7 +275,7 @@ export default function Home() {
                       <div key={index} className="bg-slate-900/80 border border-white/5 rounded-2xl p-4 flex flex-col gap-4">
                         <div className="flex items-center gap-4">
                            <div className="w-16 h-16 bg-slate-950 rounded-xl overflow-hidden shrink-0 relative border border-white/10">
-                             <Thumbnail file={file} />
+                             <Thumbnail key={file.file_path} file={file} />
                              <div className="absolute top-0 right-0 bg-black/80 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-bl-md">
                                {isVideo ? ext : 'IMG'}
                              </div>
@@ -291,7 +292,6 @@ export default function Home() {
 
                         {isVideo && (
                           <div className="flex gap-3 mt-2">
-                            {/* TOMBOL DOWNLOAD LANGSUNG (TANPA TAB BARU) */}
                             <button 
                               onClick={() => handleDirectDownload(file.fast_stream_url?.['1080p'] || file.fast_stream_url?.['720p'] || file.normal_dlink)}
                               className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
