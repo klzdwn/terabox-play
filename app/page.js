@@ -52,6 +52,17 @@ export default function Home() {
     }
   };
 
+  // FUNGSI BUAT DOWNLOAD LANGSUNG TANPA BUKA TAB BARU
+  const handleDirectDownload = (fileUrl) => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    // Atribut download buat maksa browser download, bukan buka
+    link.setAttribute('download', '');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const getBestVideoUrl = (file) => {
     if (file.fast_stream_url) {
       return file.fast_stream_url['480p'] || file.fast_stream_url['360p'] || file.fast_stream_url['720p'] || file.fast_stream_url['1080p'] || file.normal_dlink;
@@ -119,7 +130,6 @@ export default function Home() {
           <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-blue-500/20">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </div>
-          {/* UDAH GANTI JADI TERAPLAY */}
           <span className="text-xl font-black tracking-tight text-white">Tera<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Play</span></span>
         </div>
         <div className="flex items-center gap-4">
@@ -164,7 +174,6 @@ export default function Home() {
           </div>
           
           <div className="flex flex-row gap-3 mt-6">
-            {/* TOMBOL STREAM JADI PLAY */}
             <button
               onClick={() => handleFetch('play')}
               disabled={loading || !url.trim()}
@@ -282,33 +291,30 @@ export default function Home() {
 
                         {isVideo && (
                           <div className="flex gap-3 mt-2">
-                            <a 
-                              href={file.fast_stream_url?.['1080p'] || file.fast_stream_url?.['720p'] || file.normal_dlink} 
-                              target="_blank" rel="noopener noreferrer"
+                            {/* TOMBOL DOWNLOAD LANGSUNG (TANPA TAB BARU) */}
+                            <button 
+                              onClick={() => handleDirectDownload(file.fast_stream_url?.['1080p'] || file.fast_stream_url?.['720p'] || file.normal_dlink)}
                               className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                               Server 1 (HD)
-                            </a>
-                            {/* WARNA UNGU UDAH GUE GANTI JADI BIRU (bg-blue-600) */}
-                            <a 
-                              href={file.normal_dlink} 
-                              target="_blank" rel="noopener noreferrer"
+                            </button>
+                            <button 
+                              onClick={() => handleDirectDownload(file.normal_dlink)}
                               className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                               Server 2 (MP4)
-                            </a>
+                            </button>
                           </div>
                         )}
                         {!isVideo && (
-                          <a 
-                            href={file.normal_dlink} 
-                            target="_blank" rel="noopener noreferrer"
+                          <button 
+                            onClick={() => handleDirectDownload(file.normal_dlink)}
                             className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors mt-2"
                           >
                             Download File
-                          </a>
+                          </button>
                         )}
                       </div>
                     );
